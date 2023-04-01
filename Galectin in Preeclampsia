@@ -1,0 +1,111 @@
+
+##############################  Preeclampsia paper_single cell RNA-seq data analysis ##########################################
+
+library(Seurat)
+library(dplyr)
+list.files("../C1/")
+Preeclampsia_object_for_Sandra_paper.data <- Read10X(data.dir = "../C1//")
+Preeclampsia_object_for_Sandra_paper <- CreateSeuratObject(counts = Preeclampsia_object_for_Sandra_paper.data, project = "Preeclampsia_object_for_Sandra_paper3k", min.cells = 3, min.features = 200)
+Preeclampsia_object_for_Sandra_paper
+C1=Preeclampsia_object_for_Sandra_paper
+Preeclampsia_object_for_Sandra_paper.data <- Read10X(data.dir = "../C2//")
+Preeclampsia_object_for_Sandra_paper <- CreateSeuratObject(counts = Preeclampsia_object_for_Sandra_paper.data, project = "Preeclampsia_object_for_Sandra_paper3k", min.cells = 3, min.features = 200)
+C2=Preeclampsia_object_for_Sandra_paper
+Preeclampsia_object_for_Sandra_paper.data <- Read10X(data.dir = "../G1//")
+Preeclampsia_object_for_Sandra_paper <- CreateSeuratObject(counts = Preeclampsia_object_for_Sandra_paper.data, project = "Preeclampsia_object_for_Sandra_paper3k", min.cells = 3, min.features = 200)
+G1=Preeclampsia_object_for_Sandra_paper
+Preeclampsia_object_for_Sandra_paper.data <- Read10X(data.dir = "../G2//")
+Preeclampsia_object_for_Sandra_paper <- CreateSeuratObject(counts = Preeclampsia_object_for_Sandra_paper.data, project = "Preeclampsia_object_for_Sandra_paper3k", min.cells = 3, min.features = 200)
+G2=Preeclampsia_object_for_Sandra_paper
+Preeclampsia_object_for_Sandra_paper.data <- Read10X(data.dir = "../P1//")
+Preeclampsia_object_for_Sandra_paper <- CreateSeuratObject(counts = Preeclampsia_object_for_Sandra_paper.data, project = "Preeclampsia_object_for_Sandra_paper3k", min.cells = 3, min.features = 200)
+P1=Preeclampsia_object_for_Sandra_paper
+Preeclampsia_object_for_Sandra_paper.data <- Read10X(data.dir = "../P2//")
+Preeclampsia_object_for_Sandra_paper <- CreateSeuratObject(counts = Preeclampsia_object_for_Sandra_paper.data, project = "Preeclampsia_object_for_Sandra_paper3k", min.cells = 3, min.features = 200)
+P2=Preeclampsia_object_for_Sandra_paper
+Preeclampsia_object_for_Sandra_paper.data <- Read10X(data.dir = "../GL1//")
+Preeclampsia_object_for_Sandra_paper.data <- Read10X(data.dir = "../GL1//")
+Preeclampsia_object_for_Sandra_paper <- CreateSeuratObject(counts = Preeclampsia_object_for_Sandra_paper.data, project = "Preeclampsia_object_for_Sandra_paper3k", min.cells = 3, min.features = 200)
+GL1=Preeclampsia_object_for_Sandra_paper
+Preeclampsia_object_for_Sandra_paper.data <- Read10X(data.dir = "../GL2//")
+Preeclampsia_object_for_Sandra_paper <- CreateSeuratObject(counts = Preeclampsia_object_for_Sandra_paper.data, project = "Preeclampsia_object_for_Sandra_paper3k", min.cells = 3, min.features = 200)
+GL2=Preeclampsia_object_for_Sandra_paper
+
+
+
+Preeclampsia_object_for_Sandra_paper <- merge(C1, y = c(C2,G1,G2,P1,P2,GL1,GL2), add.cell.ids = c("C1", "C2", "G1","G2","P1","P2","GL1","GL2"), project = "Sandra")
+Preeclampsia_object_for_Sandra_paper <- subset(Preeclampsia_object_for_Sandra_paper, subset = nFeature_RNA > 500 & nFeature_RNA < 3000 & percent.mt < 12)
+Preeclampsia_object_for_Sandra_paper[["percent.mt"]] <- PercentageFeatureSet(Preeclampsia_object_for_Sandra_paper, pattern = "^MT-")
+Preeclampsia_object_for_Sandra_paper <- subset(Preeclampsia_object_for_Sandra_paper, subset = nFeature_RNA > 500 & nFeature_RNA < 3000 & percent.mt < 12)
+Preeclampsia_object_for_Sandra_paper <- NormalizeData(Preeclampsia_object_for_Sandra_paper, normalization.method = "LogNormalize", scale.factor = 10000)
+Preeclampsia_object_for_Sandra_paper <- FindVariableFeatures(Preeclampsia_object_for_Sandra_paper, selection.method = "vst", nfeatures = 2000)
+top10 <- head(VariableFeatures(Preeclampsia_object_for_Sandra_paper), 10)
+plot1 <- VariableFeaturePlot(Preeclampsia_object_for_Sandra_paper)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+CombinePlots(plots = list(plot1, plot2))
+dev.off()
+CombinePlots(plots = list(plot1, plot2))
+dev.off()
+Preeclampsia_object_for_Sandra_paper <- ScaleData(Preeclampsia_object_for_Sandra_paper, vars.to.regress = "percent.mt")
+Preeclampsia_object_for_Sandra_paper <- RunPCA(Preeclampsia_object_for_Sandra_paper, features = VariableFeatures(object = Preeclampsia_object_for_Sandra_paper))
+Preeclampsia_object_for_Sandra_paper <- JackStraw(Preeclampsia_object_for_Sandra_paper, num.replicate = 100)
+Preeclampsia_object_for_Sandra_paper <- ScoreJackStraw(Preeclampsia_object_for_Sandra_paper, dims = 1:20)
+JackStrawPlot(Preeclampsia_object_for_Sandra_paper, dims = 1:15)
+dev.off()
+ElbowPlot(Preeclampsia_object_for_Sandra_paper)
+dev.off()
+Preeclampsia_object_for_Sandra_paper <- FindNeighbors(Preeclampsia_object_for_Sandra_paper, dims = 1:9)
+Preeclampsia_object_for_Sandra_paper <- FindClusters(Preeclampsia_object_for_Sandra_paper, resolution = 0.8)
+Preeclampsia_object_for_Sandra_paper <- RunUMAP(Preeclampsia_object_for_Sandra_paper, dims = 1:15)
+Preeclampsia_object_for_Sandra_paper <- FindClusters(Preeclampsia_object_for_Sandra_paper, resolution = 0.6)
+Preeclampsia_object_for_Sandra_paper.markers <- FindAllMarkers(Preeclampsia_object_for_Sandra_paper, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+
+Preeclampsia_object_for_Sandra_paper@meta.data$samples <- gsub("_.*", "", colnames(Preeclampsia_object_for_Sandra_paper))
+Idents(Preeclampsia_object_for_Sandra_paper) <- samples
+Idents(Preeclampsia_object_for_Sandra_paper) <- Preeclampsia_object_for_Sandra_paper@meta.data$samples
+
+saveRDS(Preeclampsia_object_for_Sandra_paper, "Sandra_Ctrl_PE_GL_scRNA-seq_data.rds")
+unique(Idents(Preeclampsia_object_for_Sandra_paper))
+Preeclampsia_object_for_Sandra_paper <- subset(Preeclampsia_object_for_Sandra_paper, idents=c("C1","C2","P1","P2"))
+
+
+
+Preeclampsia_object_for_Sandra_paper <- NormalizeData(Preeclampsia_object_for_Sandra_paper.sub, normalization.method = "LogNormalize", scale.factor = 10000)
+Preeclampsia_object_for_Sandra_paper <- FindVariableFeatures(Preeclampsia_object_for_Sandra_paper, selection.method = "vst", nfeatures = 2000)
+Preeclampsia_object_for_Sandra_paper <- ScaleData(Preeclampsia_object_for_Sandra_paper, vars.to.regress = "percent.mt")
+Preeclampsia_object_for_Sandra_paper <- RunPCA(Preeclampsia_object_for_Sandra_paper, features = VariableFeatures(object = Preeclampsia_object_for_Sandra_paper))
+Preeclampsia_object_for_Sandra_paper <- FindNeighbors(Preeclampsia_object_for_Sandra_paper, dims = 1:9)
+Preeclampsia_object_for_Sandra_paper <- FindClusters(Preeclampsia_object_for_Sandra_paper, resolution = 0.8)
+Preeclampsia_object_for_Sandra_paper <- FindClusters(Preeclampsia_object_for_Sandra_paper, resolution = 0.6)
+Preeclampsia_object_for_Sandra_paper <- RunUMAP(Preeclampsia_object_for_Sandra_paper, dims = 1:15)
+DimPlot(Preeclampsia_object_for_Sandra_paper)
+Preeclampsia_object_for_Sandra_paper <- FindClusters(Preeclampsia_object_for_Sandra_paper, resolution = 0.5)
+saveRDS(Preeclampsia_object_for_Sandra_paper, "control_PE_for_sandra.rds")
+dev.off()
+
+new.cluster.ids <- c("CTB", "CTB", "CTB", "EVTB", "EVTB", "CTB", "CTB", "CTB", "CTB", "CTB", "STB", "CTB","STB","outlier")
+ names(new.cluster.ids) <- levels(Preeclampsia_object_for_Sandra_paper)
+ Preeclampsia_object_for_Sandra_paper <- RenameIdents(Preeclampsia_object_for_Sandra_paper, new.cluster.ids)
+ levels(Preeclampsia_object_for_Sandra_paper)
+ 
+VlnPlot(Preeclampsia_object_for_Sandra_paper, c("HLA-G","FN1", "CYP19A1", "CGA", "PAGE4","PEG10"), pt.size=0)
+dev.off()
+Preeclampsia_object_for_Sandra_paper$celltypes <- Idents(Preeclampsia_object_for_Sandra_paper)
+Idents(Preeclampsia_object_for_Sandra_paper) <- Preeclampsia_object_for_Sandra_paper$samples
+levels(Preeclampsia_object_for_Sandra_paper)
+new.cluster.ids <- c("Control", "Control", "PE", "PE")
+ names(new.cluster.ids) <- levels(Preeclampsia_object_for_Sandra_paper)
+ Preeclampsia_object_for_Sandra_paper <- RenameIdents(Preeclampsia_object_for_Sandra_paper, new.cluster.ids)
+levels(Preeclampsia_object_for_Sandra_paper)
+Preeclampsia_object_for_Sandra_paper$disease <- Idents(Preeclampsia_object_for_Sandra_paper)
+Idents(Preeclampsia_object_for_Sandra_paper) <- Preeclampsia_object_for_Sandra_paper$celltypes
+
+
+png("LGALS1_control_PE_Sandra.png",  width = 16.7, height = 12.8, units = "cm", res = 600, pointsize = 12)
+VlnPlot(Preeclampsia_object_for_Sandra_paper, c("LGALS1"), pt.size=0, split.by="disease", group.by="celltypes", col=c("gold", "midnightblue"))
+dev.off()
+
+
+savehistory("PE_healthy_analysis_Sandra_paper.Rhistory")
+
+
