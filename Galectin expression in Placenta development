@@ -1,0 +1,77 @@
+############## Analysis of data from Vento et al., Nature ####################
+library(doParallel)
+library(doRNG)
+BiocManager::install(c("doMC", "doRNG"))
+library(doRNG)
+library(Seurat)
+RDS_for_Sandra_paper_2023 <- readRDS("~/Suppressyn/RNA_seq/scRNAseq/tenX/tropho_scRNAseq_Nature.rds")
+new.cluster.ids <- c("blood","blood", "CTB", "Decidua_1",  "Decidua_2",  "blood", #5
+ "Macrophage", "blood", "EVTB", "Macrophage", "Decidua_3", #10
+ "CTB", "Tropho_progen", "DC1", "PeriVascular", "blood", #15
+ "blood",  "HofBauer",  "M2_Macrophage", "Endothelial", "STB", #20
+ "Decidua_4", "Decidua_5", "Macrophage", "Plasmocyte", "EVTB", #25
+ "Granulocyte", "Macrophage", "F1", "Macrophage", "Macrophage", #30
+ "DC2", "blood", "F2", "Decidua_3", "blood")
+
+names(new.cluster.ids) <- levels(RDS_for_Sandra_paper_2023)
+
+RDS_for_Sandra_paper_2023 <- RenameIdents(RDS_for_Sandra_paper_2023, new.cluster.ids)
+
+
+my_levels <- c("Tropho_progen","CTB", "STB", "EVTB", "HofBauer", "Macrophage", "M2_Macrophage", "blood", 
+  "Decidua_1", "Decidua_2", "Decidua_3","Decidua_4", "Decidua_5", "PeriVascular", "DC1", "DC2",
+ "F1", "F2", "Granulocyte", "Plasmocyte", "Endothelial")
+
+levels(RDS_for_Sandra_paper_2023) <- my_levels
+
+library(scater) # load the library
+
+library(scran) # load the library
+
+RDS_for_Sandra_paper_2023.sub <- subset(tropho, idents = c("Tropho_progen","CTB","STB","EVTB"))
+
+data <- as(as.matrix(RDS_for_Sandra_paper_2023.sub@assays$RNA@data), 'sparseMatrix')
+
+
+ pd <- new('AnnotatedDataFrame', data = RDS_for_Sandra_paper_2023.sub@meta.data)
+ fData <- data.frame(gene_short_name = row.names(data), row.names = row.names(data))
+ fd <- new('AnnotatedDataFrame', data = fData)
+ Monocle2_object_for_Sandra_paper <- newCellDataSet(data,
+                               phenoData = pd,
+                               featureData = fd,
+                               lowerDetectionLimit = 1,
+                               expressionFamily = uninormal())
+ Monocle2_object_for_Sandra_paper <- reduceDimension(Monocle2_object_for_Sandra_paper,norm_method="none", 
+                         reduction_method="DDRTree",
+                         max_components=4,
+                         scaling=TRUE,
+                         verbose=TRUE,
+                         pseudo_expr=1)
+
+cell_types <- Idents(RDS_for_Sandra_paper_2023.sub)
+
+
+ png("Trajectory_tropho_cells_Sandra_V2.png",  width = 14.8, height = 16.8, units = "cm", res = 600, pointsize = 12)
+ plot_cell_trajectory(Monocle2_object_for_Sandra_paper, 
+                      color_by = "cell_types",
+                      theta = -15,
+                      show_branch_points = FALSE,
+                      show_tree = TRUE,
+                      cell_size = 0.7) + scale_color_manual(values=c("red", "red", "gold", "purple")) + theme(legend.position = "right")
+                                                 dev.off()
+                                                 
+                                                 
+png("Trajectory_tropho_cells_Sandra_V3.png",  width = 14.8, height = 16.8, units = "cm", res = 600, pointsize = 12)
+ plot_cell_trajectory(Monocle2_object_for_Sandra_paper, 
+                      color_by = "cell_types",
+                      theta = -15,
+                      show_branch_points = FALSE,
+                      show_tree = TRUE,
+                      cell_size = 0.5) + scale_color_manual(values=c("red", "red", "gold", "purple")) + theme(legend.position = "right")
+                                                dev.off()
+
+
+png("Trajectory_san_genes_LGALS1.png",  width = 14.8, height = 16.8, units = "cm", res = 600, pointsize = 12)
+ plot_cell_trajectory(Monocle2_object_for_Sandra_paper, markers = "LGALS1", use_color_gradient = TRUE, markers_linear=F, cell_size=0.1, show_backbone=F, show_branch_points=F) +  scale_colour_gradient2(low = "royalblue", mid = "lightblue", high = "red")
+ dev.off()
+
